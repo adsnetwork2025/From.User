@@ -1,47 +1,156 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>ডিপোজিট ফর্ম</title>
+  <title>Freelancer 404</title>
+  <style>
+    .circle {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      background: #f0f0f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: auto;
+      font-size: 24px;
+      font-weight: bold;
+    }
+    .btn {
+      padding: 10px 20px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 10px;
+    }
+    .tick {
+      color: blue;
+      font-weight: bold;
+      margin-left: 5px;
+    }
+  </style>
 </head>
-<body>
-    <h2>ডিপোজিট ফর্ম</h2>
-    <form id="depositForm">
-        <input type="text" id="name" placeholder="নাম" required><br><br>
-        <input type="text" id="phone" placeholder="মোবাইল" required><br><br>
-        <input type="number" id="amount" placeholder="পরিমাণ" required><br><br>
-        <input type="text" id="trxid" placeholder="ট্রানজেকশন আইডি" required><br><br>
-        <select id="method">
-            <option value="bkash">বিকাশ</option>
-            <option value="nagad">নগদ</option>
-        </select><br><br>
-        <input type="text" id="adminCode" placeholder="Admin Code" required><br><br>
-        <button type="submit">সাবমিট করুন</button>
-    </form>
+<body onload="init()">
+  <h1 style="text-align: center;">Freelancer 404</h1>
+  <div class="circle">
+    ৳<span id="balance">0</span>
+    <span id="verifiedTick" class="tick" style="display:none;">✔</span>
+  </div>
 
-    <p id="message"></p>
+  <button class="btn" onclick="showDepositForm()">Verify Account</button>
+  <button class="btn" onclick="showWithdrawForm()">Withdraw</button>
 
-    <script>
-        document.getElementById("depositForm").addEventListener("submit", function(e){
-            e.preventDefault();
+  <!-- Deposit Form -->
+  <div id="depositForm" style="display:none;">
+    <h3>একাউন্ট ভেরিফাই করতে ১০০ টাকা সেন্ড মানি করুন</h3>
+    <p>বিকাশ: 01XXXXXXXXX <button onclick="copyText('01XXXXXXXXX')">Copy</button></p>
+    <p>নগদ: 01YYYYYYYYY <button onclick="copyText('01YYYYYYYYY')">Copy</button></p>
 
-            const entry = {
-                name: document.getElementById("name").value,
-                phone: document.getElementById("phone").value,
-                amount: document.getElementById("amount").value,
-                trxid: document.getElementById("trxid").value,
-                method: document.getElementById("method").value,
-                adminCode: document.getElementById("adminCode").value,
-                status: "Pending"
-            };
+    <label>এই সাবমিট কোডটি এখানে লিখুন:</label><br/>
+    <input type="text" id="submitCode" placeholder="199234"><br/><br/>
+    <label>আপনার ট্রানজেকশন আইডি দিন:</label><br/>
+    <input type="text" id="txn"><br/><br/>
+    <button class="btn" onclick="submitDeposit()">Verify Now</button>
+  </div>
 
-            let data = JSON.parse(localStorage.getItem("deposits") || "[]");
-            data.push(entry);
-            localStorage.setItem("deposits", JSON.stringify(data));
+  <!-- Withdraw Form -->
+  <div id="withdrawForm" style="display:none; max-width: 400px; margin: auto;">
+    <h3>Withdraw Request</h3>
 
-            document.getElementById("depositForm").reset();
-            document.getElementById("message").innerText = "আপনার ডিপোজিট রিকোয়েস্ট সফলভাবে সাবমিট হয়েছে!";
-        });
-    </script>
+    <label>এই সাবমিট কোডটি এখানে লিখুন:</label><br />
+    <input type="text" id="withdrawCode" placeholder="199234" /><br /><br />
+
+    <label>Withdraw Method:</label><br />
+    <select id="withdrawMethod">
+      <option value="bkash">বিকাশ</option>
+      <option value="nagad">নগদ</option>
+    </select><br /><br />
+
+    <label>Account Number:</label><br />
+    <input type="text" id="withdrawNumber" /><br /><br />
+
+    <label>Amount (Min 100):</label><br />
+    <input type="number" id="withdrawAmount" /><br /><br />
+
+    <button class="btn" onclick="submitWithdraw()">Submit Withdraw</button>
+  </div>
+
+<script>
+const fixedSubmitCode = "199234";
+
+function init() {
+  updateBalanceIfVerified();
+  setInterval(updateBalanceIfVerified, 10000);
+}
+
+function copyText(text) {
+  navigator.clipboard.writeText(text);
+  alert("Number copied: " + text);
+}
+
+function showDepositForm() {
+  document.getElementById("depositForm").style.display = "block";
+}
+
+function showWithdrawForm() {
+  document.getElementById("withdrawForm").style.display = "block";
+}
+
+function submitDeposit() {
+  const code = document.getElementById("submitCode").value;
+  const txn = document.getElementById("txn").value;
+  if (code !== fixedSubmitCode || !txn) return alert("Please enter valid code and transaction ID.");
+
+  const user = {
+    code: code,
+    txn: txn,
+    verified: false,
+    balance: 0,
+    lastCredited: 0
+  };
+  localStorage.setItem("user_" + code, JSON.stringify(user));
+  alert("Deposit submitted! Admin will verify.");
+}
+
+function submitWithdraw() {
+  const code = document.getElementById("withdrawCode").value;
+  if (code !== fixedSubmitCode) return alert("Invalid submit code.");
+
+  const method = document.getElementById('withdrawMethod').value;
+  const number = document.getElementById('withdrawNumber').value;
+  const amount = parseInt(document.getElementById('withdrawAmount').value);
+
+  if (!number || isNaN(amount) || amount < 100) return alert("Provide valid details and minimum 100 TK.");
+
+  const userData = localStorage.getItem("user_" + code);
+  if (!userData) return alert("User not found.");
+
+  const user = JSON.parse(userData);
+  if (user.balance < amount) return alert("Insufficient balance.");
+
+  const withdrawRequest = { method, number, amount, time: Date.now(), status: "pending" };
+  localStorage.setItem("withdraw_" + code, JSON.stringify(withdrawRequest));
+  alert("Withdraw request sent.");
+}
+
+function updateBalanceIfVerified() {
+  const userData = localStorage.getItem("user_" + fixedSubmitCode);
+  if (!userData) return;
+
+  let user = JSON.parse(userData);
+  if (user.verified) {
+    let now = Date.now();
+    let hoursPassed = (now - user.lastCredited) / (1000 * 60 * 60);
+    if (hoursPassed >= 12) {
+      user.balance += 6;
+      user.lastCredited = now;
+      localStorage.setItem("user_" + fixedSubmitCode, JSON.stringify(user));
+    }
+    document.getElementById("balance").innerText = user.balance;
+    document.getElementById("verifiedTick").style.display = "inline-block";
+  }
+}
+</script>
 </body>
 </html>
