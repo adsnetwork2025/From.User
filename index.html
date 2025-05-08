@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <title>ডিপোজিট ফর্ম</title>
+</head>
+<body>
+    <h2>ডিপোজিট ফর্ম</h2>
+    <form id="depositForm">
+        <input type="text" id="name" placeholder="নাম" required><br><br>
+        <input type="text" id="phone" placeholder="মোবাইল" required><br><br>
+        <input type="number" id="amount" placeholder="পরিমাণ" required><br><br>
+        <input type="text" id="trxid" placeholder="ট্রানজেকশন আইডি" required><br><br>
+        <select id="method">
+            <option value="bkash">বিকাশ</option>
+            <option value="nagad">নগদ</option>
+        </select><br><br>
+        <input type="text" id="adminCode" placeholder="Admin Code" required><br><br>
+        <button type="submit">সাবমিট করুন</button>
+    </form>
+
+    <p id="message"></p>
+
+    <script>
+        document.getElementById("depositForm").addEventListener("submit", function(e){
+            e.preventDefault();
+
+            const entry = {
+                name: document.getElementById("name").value,
+                phone: document.getElementById("phone").value,
+                amount: document.getElementById("amount").value,
+                trxid: document.getElementById("trxid").value,
+                method: document.getElementById("method").value,
+                adminCode: document.getElementById("adminCode").value,
+                status: "Pending"
+            };
+
+            let data = JSON.parse(localStorage.getItem("deposits") || "[]");
+            data.push(entry);
+            localStorage.setItem("deposits", JSON.stringify(data));
+
+            document.getElementById("depositForm").reset();
+            document.getElementById("message").innerText = "আপনার ডিপোজিট রিকোয়েস্ট সফলভাবে সাবমিট হয়েছে!";
+        });
+    </script>
+</body>
+</html>
