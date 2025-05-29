@@ -1,54 +1,175 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Hridoy Officials (√)</title>
+  <title>Daily Earn Money</title>
   <style>
-    body { font-family: Arial; background: #f0f2f5; padding: 0; margin: 0; }
-    header { background: #4267B2; color: white; padding: 15px; text-align: center; font-size: 24px; }
-    .container { max-width: 600px; margin: auto; padding: 20px; }
-    .post { background: white; margin-bottom: 15px; padding: 15px; border-radius: 10px; }
-    .post img, .post video { max-width: 100%; margin-top: 10px; border-radius: 5px; }
-    .like, .comment { color: #1877f2; cursor: pointer; margin-right: 10px; }
-    .comments { margin-top: 10px; }
-    .comments p { background: #eee; padding: 5px; border-radius: 5px; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #f2f2f2;
+      text-align: center;
+    }
+
+    .title {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #333;
+      margin-top: 20px;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); color: #333; }
+      50% { transform: scale(1.1); color: #4CAF50; }
+    }
+
+    .balance-box {
+      margin: 30px auto;
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+
+    .balance-label {
+      font-size: 1rem;
+      color: #777;
+    }
+
+    .balance {
+      font-size: 1.8rem;
+      color: #4CAF50;
+      font-weight: bold;
+    }
+
+    input, select, button {
+      padding: 10px;
+      margin: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      width: 80%;
+      max-width: 300px;
+      font-size: 1rem;
+    }
+
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    .section {
+      margin-top: 30px;
+    }
+
+    .hidden {
+      display: none;
+    }
   </style>
 </head>
 <body>
-<header>Hridoy Officials (√)</header>
-<div class="container" id="postContainer">
-  <!-- পোস্ট এখানে লোড হবে -->
-</div>
 
-<script>
-fetch('posts.json')
-  .then(res => res.json())
-  .then(posts => {
-    const container = document.getElementById("postContainer");
-    posts.reverse().forEach(post => {
-      const div = document.createElement("div");
-      div.className = "post";
-      div.innerHTML = `
-        <p>${post.text}</p>
-        ${post.file ? (post.type === 'image' ? `<img src="${post.file}">` : `<video controls src="${post.file}"></video>`) : ''}
-        <div>
-          <span class="like" onclick="this.innerText='Liked ✔'">Like</span>
-          <span class="comment" onclick="addComment(this)">Comment</span>
-          <div class="comments"></div>
-        </div>
-      `;
-      container.appendChild(div);
-    });
-  });
+  <div class="title">Daily Earn Money</div>
 
-function addComment(el) {
-  const text = prompt("আপনার মন্তব্য লিখুন:");
-  if (text) {
-    const div = document.createElement("p");
-    div.textContent = text;
-    el.parentElement.querySelector('.comments').appendChild(div);
-  }
-}
-</script>
+  <div class="balance-box">
+    <div class="balance-label">Your Balance</div>
+    <div class="balance" id="balance">0.00৳</div>
+  </div>
+
+  <div>
+    <input type="text" id="redeemCode" placeholder="Enter Redeem Code">
+  </div>
+  <div>
+    <button onclick="claimBonus()">Claim Bonus</button>
+  </div>
+
+  <div class="section">
+    <button onclick="window.location.href='https://t.me/usdt_earning1'">Join Telegram</button>
+    <button onclick="showWithdraw()">Withdraw</button>
+  </div>
+
+  <div class="section hidden" id="withdrawSection">
+    <select id="method">
+      <option value="bkash">bKash</option>
+      <option value="nagad">Nagad</option>
+    </select><br>
+    <input type="text" id="accountNumber" placeholder="Enter Your Number">
+    <input type="number" id="withdrawAmount" placeholder="Amount">
+    <button onclick="withdrawNow()">Withdraw Now</button>
+  </div>
+
+  <script>
+    const redeemCodes = JSON.parse(localStorage.getItem('redeemCodes')) || {
+      'ABC123': 5,
+      'XYZ789': 10,
+      'BONUS50': 50
+    };
+
+    const usedCodes = JSON.parse(localStorage.getItem('usedCodes')) || [];
+
+    let balance = parseFloat(localStorage.getItem('balance')) || 0;
+    document.getElementById('balance').innerText = balance.toFixed(2) + '৳';
+
+    function claimBonus() {
+      const code = document.getElementById('redeemCode').value.trim();
+      if (redeemCodes[code] && !usedCodes.includes(code)) {
+        const bonus = redeemCodes[code];
+        balance += bonus;
+        localStorage.setItem('balance', balance);
+        usedCodes.push(code);
+        localStorage.setItem('usedCodes', JSON.stringify(usedCodes));
+        document.getElementById('balance').innerText = balance.toFixed(2) + '৳';
+        alert(`You received ${bonus}৳ bonus!`);
+      } else {
+        alert("Invalid or already used code.");
+      }
+      document.getElementById('redeemCode').value = '';
+    }
+
+    function showWithdraw() {
+      document.getElementById('withdrawSection').classList.remove('hidden');
+    }
+
+    function withdrawNow() {
+      const method = document.getElementById('method').value;
+      const number = document.getElementById('accountNumber').value.trim();
+      const amount = parseFloat(document.getElementById('withdrawAmount').value);
+
+      if (!number || isNaN(amount) || amount <= 0) {
+        alert("Please enter valid number and amount.");
+        return;
+      }
+
+      if (amount > balance) {
+        alert("Insufficient balance.");
+        return;
+      }
+
+      const message = `🔔 New Withdraw Request\nMethod: ${method}\nNumber: ${number}\nAmount: ${amount}৳`;
+      const token = 'YOUR_TELEGRAM_BOT_TOKEN';
+      const chat_id = 'YOUR_CHAT_ID';
+
+      fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${chat_id}&text=${encodeURIComponent(message)}`)
+        .then(() => {
+          balance -= amount;
+          localStorage.setItem('balance', balance);
+          document.getElementById('balance').innerText = balance.toFixed(2) + '৳';
+          alert("Withdrawal request sent!");
+        }).catch(() => {
+          alert("Failed to send request.");
+        });
+    }
+  </script>
 </body>
 </html>
