@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Daily Earn Money</title>
   <style>
     body {
@@ -50,12 +50,13 @@
 
     input, select, button {
       padding: 10px;
-      margin: 10px;
+      margin: 10px auto;
       border-radius: 8px;
       border: 1px solid #ccc;
       width: 80%;
       max-width: 300px;
       font-size: 1rem;
+      display: block;
     }
 
     button {
@@ -63,6 +64,7 @@
       color: white;
       border: none;
       cursor: pointer;
+      transition: background-color 0.3s ease;
     }
 
     button:hover {
@@ -74,7 +76,78 @@
     }
 
     .hidden {
-      display: none;
+      display: none !important;
+    }
+
+    /* Modal styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+
+    .modal {
+      background: white;
+      padding: 20px 30px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.3);
+      text-align: left;
+      position: relative;
+    }
+
+    .modal h2 {
+      margin-top: 0;
+      color: #4CAF50;
+      text-align: center;
+    }
+
+    .referral-link-container {
+      display: flex;
+      margin-top: 15px;
+      gap: 10px;
+    }
+
+    .referral-link-container input {
+      flex-grow: 1;
+      font-size: 1rem;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      user-select: all;
+    }
+
+    .copy-btn {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .copy-btn:hover {
+      background-color: #45a049;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      background: transparent;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #777;
+    }
+    .close-btn:hover {
+      color: #333;
     }
   </style>
 </head>
@@ -87,29 +160,40 @@
     <div class="balance" id="balance">0.00৳</div>
   </div>
 
-  <div>
-    <input type="text" id="redeemCode" placeholder="Enter Redeem Code">
-  </div>
-  <div>
-    <button onclick="claimBonus()">Claim Bonus</button>
-  </div>
+  <input type="text" id="redeemCode" placeholder="Enter Redeem Code" />
+  <button onclick="claimBonus()">Claim Bonus</button>
 
   <div class="section">
-    <button onclick="window.location.href='https://t.me/Daily_Earn_Money12'">Join Telegram</button>
+    <button onclick="window.open('https://t.me/Daily_Earn_Money12', '_blank')">Join Telegram</button>
     <button onclick="showWithdraw()">Withdraw</button>
+    <button onclick="showInvite()">Invite Friend</button>
   </div>
 
   <div class="section hidden" id="withdrawSection">
     <select id="method">
       <option value="bkash">bKash</option>
       <option value="nagad">Nagad</option>
-    </select><br>
-    <input type="text" id="accountNumber" placeholder="Enter Your Number">
-    <input type="number" id="withdrawAmount" placeholder="Amount">
+    </select>
+    <input type="text" id="accountNumber" placeholder="Enter Your Number" />
+    <input type="number" id="withdrawAmount" placeholder="Amount" />
     <button onclick="withdrawNow()">Withdraw Now</button>
   </div>
 
+  <!-- Invite Friend Modal -->
+  <div id="inviteModal" class="modal-overlay hidden" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="inviteTitle">
+      <button class="close-btn" onclick="closeInvite()" aria-label="Close Invite Modal">&times;</button>
+      <h2 id="inviteTitle">Invite Your Friends</h2>
+      <p>Share your referral link:</p>
+      <div class="referral-link-container">
+        <input type="text" id="referralLink" readonly />
+        <button class="copy-btn" onclick="copyReferralLink()">Copy</button>
+      </div>
+    </div>
+  </div>
+
   <script>
+    // Redeem Codes & Used Codes Storage (example)
     const redeemCodes = JSON.parse(localStorage.getItem('redeemCodes')) || {
       'ABC123': 5,
       'XYZ789': 10,
@@ -118,11 +202,21 @@
 
     const usedCodes = JSON.parse(localStorage.getItem('usedCodes')) || [];
 
+    // Balance initialization
     let balance = parseFloat(localStorage.getItem('balance')) || 0;
     document.getElementById('balance').innerText = balance.toFixed(2) + '৳';
 
+    // Claim bonus function
     function claimBonus() {
-      const code = document.getElementById('redeemCode').value.trim();
+      const codeInput = document.getElementById('redeemCode');
+      const code = codeInput.value.trim();
+
+      if (!code) {
+        alert("Please enter a redeem code.");
+        codeInput.focus();
+        return;
+      }
+
       if (redeemCodes[code] && !usedCodes.includes(code)) {
         const bonus = redeemCodes[code];
         balance += bonus;
@@ -130,17 +224,19 @@
         usedCodes.push(code);
         localStorage.setItem('usedCodes', JSON.stringify(usedCodes));
         document.getElementById('balance').innerText = balance.toFixed(2) + '৳';
-        alert(`You received ${bonus}৳ bonus!`);
+        alert(`✅ You received ${bonus}৳ bonus!`);
       } else {
-        alert("Invalid or already used code.");
+        alert("❌ Invalid or already used code.");
       }
-      document.getElementById('redeemCode').value = '';
+      codeInput.value = '';
     }
 
+    // Show withdraw section
     function showWithdraw() {
       document.getElementById('withdrawSection').classList.remove('hidden');
     }
 
+    // Withdraw Now function
     function withdrawNow() {
       const method = document.getElementById('method').value;
       const number = document.getElementById('accountNumber').value.trim();
@@ -148,6 +244,11 @@
 
       if (!number || isNaN(amount) || amount <= 0) {
         alert("Please enter valid number and amount.");
+        return;
+      }
+
+      if (amount < 200) {
+        alert("Minimum withdrawal amount is 200৳.");
         return;
       }
 
@@ -166,10 +267,64 @@
           localStorage.setItem('balance', balance);
           document.getElementById('balance').innerText = balance.toFixed(2) + '৳';
           alert("Withdrawal request sent!");
-        }).catch(() => {
+          // Clear input fields
+          document.getElementById('accountNumber').value = '';
+          document.getElementById('withdrawAmount').value = '';
+          document.getElementById('withdrawSection').classList.add('hidden');
+        })
+        .catch(() => {
           alert("Failed to send request.");
         });
     }
+
+    // Invite Friend Modal handling
+    const inviteModal = document.getElementById('inviteModal');
+    const referralInput = document.getElementById('referralLink');
+
+    // Generate or get userId from localStorage
+    function getUserId() {
+      let userId = localStorage.getItem('userId');
+      if (!userId) {
+        userId = Math.random().toString(36).substring(2, 8).toUpperCase();
+        localStorage.setItem('userId', userId);
+      }
+      return userId;
+    }
+
+    // Show Invite modal & generate referral link
+    function showInvite() {
+      const botUsername = 'Daily_Earn_Money1234_Bot'; // আপনার বটের ইউজারনেম
+      const userId = getUserId();
+      const referralLink = `https://t.me/${botUsername}?start=${userId}`;
+      referralInput.value = referralLink;
+      inviteModal.classList.remove('hidden');
+      inviteModal.setAttribute('aria-hidden', 'false');
+      referralInput.select();
+    }
+
+    // Close Invite modal
+    function closeInvite() {
+      inviteModal.classList.add('hidden');
+      inviteModal.setAttribute('aria-hidden', 'true');
+    }
+
+    // Copy referral link to clipboard
+    function copyReferralLink() {
+      referralInput.select();
+      referralInput.setSelectionRange(0, 99999); // For mobile devices
+
+      try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+          alert('Referral link copied to clipboard!');
+        } else {
+          alert('Failed to copy referral link.');
+        }
+      } catch (err) {
+        alert('Browser does not support copying.');
+      }
+    }
   </script>
+
 </body>
 </html>
